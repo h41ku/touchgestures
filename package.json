@@ -5,8 +5,8 @@
     "type": "module",
     "author": "h41ku <h41ku.c0de@ya.ru>",
     "license": "MIT",
-    "types": "src/index.d.ts",
     "main": "src/index.js",
+    "types": "types/index.d.ts",
     "scripts": {
     }
 }
