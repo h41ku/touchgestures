@@ -1,0 +1,11 @@
+{
+    "name": "touchgestures",
+    "version": "0.0.1",
+    "type": "module",
+    "author": "h41ku <h41ku.c0de@ya.ru>",
+    "license": "MIT",
+    "types": "src/index.d.ts",
+    "main": "src/index.js",
+    "scripts": {
+    }
+}

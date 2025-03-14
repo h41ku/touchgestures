@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, minimum-scale=1, maximum-scale=1, shrink-to-fit=no"/>
+<meta id="theme-color" name="theme-color" content="#ffffff"/>
+<style>
+
+html, body, canvas {
+    display: block;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    height: 100%;
+    min-height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+</style>
+</head>
+<body>
+<canvas></canvas>
+<script type="module">
+
+import TouchGestures, * as events from '../src/index.js'
+
+const canvas = document.querySelector('canvas')
+const ctx = canvas.getContext('2d')
+const canvasRatio = 1
+
+const pointerState = {
+    pressed: false,
+    pointPressed: {
+        x: 0,
+        y: 0
+    },
+    pointCurrent: {
+        x: 0,
+        y: 0
+    }
+}
+
+const sceneState = {
+    translate: {
+        x: 0,
+        y: 0,
+    },
+    scale: 1.0
+}
+
+const render = () => {
+
+    // constants
+
+    const gridStep = 25
+
+    const rectSize = 50
+    const rectPosX = gridStep * 3
+    const rectPosY = gridStep * 3
+
+    // locals
+
+    const width = canvas.width
+    const height = canvas.height
+    const origin = sceneState.translate
+    const scale = sceneState.scale
+
+    // clear
+
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, width, height)
+
+    // draw grid
+
+    const gridStepCurrent = gridStep * scale
+    const gridStartXCurrent = origin.x - (Math.floor(origin.x / gridStepCurrent) + (origin.x > 0 ? 1 : 0)) * gridStepCurrent
+    const gridStartYCurrent = origin.y - (Math.floor(origin.y / gridStepCurrent) + (origin.y > 0 ? 1 : 0)) * gridStepCurrent
+
+    ctx.fillStyle = '#cccccc'
+    for (let x = gridStartXCurrent; x <= width; x += gridStepCurrent) {
+        ctx.fillRect(x, 0, 1, height)
+    }
+    for (let y = gridStartYCurrent; y <= height; y += gridStepCurrent) {
+        ctx.fillRect(0, y, width, 1)
+    }
+
+    // draw rect    
+
+    const rectSizeCurrent = rectSize * scale
+    const rectPosXCurrent = rectPosX * scale + origin.x
+    const rectPosYCurrent = rectPosY * scale + origin.y
+    
+    ctx.fillStyle = pointerState.pressed ? 'rgba(255,128,128,0.5)' : 'rgba(128,255,128,0.5)'
+    ctx.fillRect(rectPosXCurrent, rectPosYCurrent, rectSizeCurrent, rectSizeCurrent)
+}
+
+const resize = () => {
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    render()
+}
+
+window.addEventListener('resize', resize)
+resize() // calling render() inside resize()
+
+const tg = new TouchGestures(canvas)
+tg.disableNativeGestures()
+tg.enableTouchGestures()
+tg.enableMouseGestures()
+
+const getPointFromEvent = (r, evt) => {
+    const clientRect = canvas.getBoundingClientRect()
+    r.x = (evt.clientX - clientRect.left) / canvasRatio
+    r.y = (evt.clientY - clientRect.top) / canvasRatio
+}
+
+canvas.addEventListener(events.POINTER_DOWN, evt => {
+    pointerState.pressed = true
+    getPointFromEvent(pointerState.pointPressed, evt.detail)
+    getPointFromEvent(pointerState.pointCurrent, evt.detail)
+    render()
+})
+
+canvas.addEventListener(events.POINTER_UP, evt => {
+    if (pointerState.pressed) {
+        pointerState.pressed = false
+        getPointFromEvent(pointerState.pointCurrent, evt.detail)
+        sceneState.translate.x += pointerState.pointCurrent.x - pointerState.pointPressed.x
+        sceneState.translate.y += pointerState.pointCurrent.y - pointerState.pointPressed.y
+        pointerState.pointPressed.x = pointerState.pointCurrent.x = 0
+        pointerState.pointPressed.y = pointerState.pointCurrent.y = 0
+        render()
+    }
+})
+
+canvas.addEventListener(events.POINTER_MOVE, evt => {
+    if (pointerState.pressed) {
+        getPointFromEvent(pointerState.pointCurrent, evt.detail)
+        sceneState.translate.x += pointerState.pointCurrent.x - pointerState.pointPressed.x
+        sceneState.translate.y += pointerState.pointCurrent.y - pointerState.pointPressed.y
+        pointerState.pointPressed.x = pointerState.pointCurrent.x
+        pointerState.pointPressed.y = pointerState.pointCurrent.y
+        render()
+    }
+})
+
+canvas.addEventListener(events.POINTER_ZOOM, evt => {
+    evt.detail.originalEvent.preventDefault()
+    const deltaScale = evt.detail.deltaScale
+    getPointFromEvent(pointerState.pointCurrent, evt.detail)
+    const r = sceneState.translate
+    const p1 = sceneState.translate
+    const p2 = pointerState.pointCurrent
+    const s = sceneState.scale
+    r.x = p1.x - deltaScale * (p2.x - p1.x)
+    r.y = p1.y - deltaScale * (p2.y - p1.y)
+    sceneState.scale = sceneState.scale * deltaScale + sceneState.scale
+    render()
+})
+
+</script>
+</body>
+</html>
