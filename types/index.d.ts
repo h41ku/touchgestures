@@ -6,3 +6,5 @@ export interface TouchGestures {
     enableMouseGestures(): void,
     disableMouseGestures(): void,
 };
+
+export default TouchGestures;
